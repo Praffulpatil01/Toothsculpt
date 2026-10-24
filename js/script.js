@@ -159,6 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollAnimations();
   initDeveloperSalesPitch();
   initGoogleMapsPreview();
+  initHeroViewSwitcher();
+  init3DTooth();
+  init3DCardTilt();
 });
 
 /* ==========================================================================
@@ -763,4 +766,375 @@ function initGoogleMapsPreview() {
       loading="lazy">
     </iframe>
   `;
+}
+
+/* ==========================================================================
+   15. HERO VIEW SWITCHER (3D TOOTH VS CLINIC OPERATORY)
+   ========================================================================== */
+function initHeroViewSwitcher() {
+  const btn3d = document.getElementById('viewSwitch3d');
+  const btnClinic = document.getElementById('viewSwitchClinic');
+  const pane3d = document.getElementById('hero3dPane');
+  const paneClinic = document.getElementById('heroClinicPane');
+
+  if (!btn3d || !btnClinic || !pane3d || !paneClinic) return;
+
+  btn3d.addEventListener('click', () => {
+    btn3d.classList.add('active');
+    btn3d.setAttribute('aria-selected', 'true');
+    btnClinic.classList.remove('active');
+    btnClinic.setAttribute('aria-selected', 'false');
+
+    pane3d.classList.add('active');
+    paneClinic.classList.remove('active');
+
+    // Trigger window resize so Three.js canvas adjusts buffer size
+    window.dispatchEvent(new Event('resize'));
+  });
+
+  btnClinic.addEventListener('click', () => {
+    btnClinic.classList.add('active');
+    btnClinic.setAttribute('aria-selected', 'true');
+    btn3d.classList.remove('active');
+    btn3d.setAttribute('aria-selected', 'false');
+
+    paneClinic.classList.add('active');
+    pane3d.classList.remove('active');
+  });
+}
+
+/* ==========================================================================
+   16. THREE.JS PROCEDURAL 3D TOOTH STUDIO
+   ========================================================================== */
+function init3DTooth() {
+  const container = document.getElementById('hero3dContainer');
+  const canvas = document.getElementById('tooth3dCanvas');
+
+  if (!container || !canvas) return;
+
+  // Graceful fallback if Three.js CDN was blocked or failed to load
+  if (typeof THREE === 'undefined') {
+    console.info('Three.js not detected; displaying clinic operatory view.');
+    const btnClinic = document.getElementById('viewSwitchClinic');
+    if (btnClinic) btnClinic.click();
+    return;
+  }
+
+  try {
+    const scene = new THREE.Scene();
+
+    const getWidth = () => container.clientWidth || 480;
+    const getHeight = () => container.clientHeight || 420;
+
+    const camera = new THREE.PerspectiveCamera(38, getWidth() / getHeight(), 0.1, 100);
+    camera.position.set(0, 0.18, 5.0);
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(getWidth(), getHeight());
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+    // Dental Porcelain Materials
+    const enamelMat = new THREE.MeshPhysicalMaterial({
+      color: 0xfefefe,
+      roughness: 0.14,
+      metalness: 0.04,
+      clearcoat: 0.95,
+      clearcoatRoughness: 0.08
+    });
+
+    const rootMat = new THREE.MeshPhysicalMaterial({
+      color: 0xf6f0e2,
+      roughness: 0.32,
+      metalness: 0.02,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.2
+    });
+
+    const goldRingMat = new THREE.MeshStandardMaterial({
+      color: 0xd4af37,
+      metalness: 0.85,
+      roughness: 0.25
+    });
+
+    // Main Tooth Container Group
+    const toothGroup = new THREE.Group();
+    toothGroup.scale.set(0.9, 0.9, 0.9);
+    toothGroup.position.set(0.12, 0, 0);
+    scene.add(toothGroup);
+
+    // 1. Procedural Crown (Deformed sphere with 4 sculpted cusps)
+    const crownGeo = new THREE.SphereGeometry(0.88, 64, 48);
+    const cPos = crownGeo.attributes.position;
+    for (let i = 0; i < cPos.count; i++) {
+      let x = cPos.getX(i);
+      let y = cPos.getY(i);
+      let z = cPos.getZ(i);
+
+      // Squarish-oval molar profile
+      const angle = Math.atan2(z, x);
+      const squareFactor = 1.0 + 0.09 * Math.cos(4 * angle);
+      x *= squareFactor;
+      z *= squareFactor;
+
+      // Bottom waist taper
+      if (y < 0) {
+        let taper = 1.0 + y * 0.35;
+        x *= taper;
+        z *= taper;
+        y *= 0.65;
+      } else {
+        // Occlusal table top with 4 cusps and central dip
+        y *= 0.85;
+        let cusp1 = Math.exp(-((x - 0.36)**2 + (z - 0.36)**2) * 12) * 0.22;
+        let cusp2 = Math.exp(-((x + 0.36)**2 + (z - 0.36)**2) * 12) * 0.22;
+        let cusp3 = Math.exp(-((x - 0.36)**2 + (z + 0.36)**2) * 12) * 0.20;
+        let cusp4 = Math.exp(-((x + 0.36)**2 + (z + 0.36)**2) * 12) * 0.20;
+        let centerDip = -Math.exp(-(x**2 + z**2) * 14) * 0.12;
+        y += (cusp1 + cusp2 + cusp3 + cusp4 + centerDip);
+      }
+      cPos.setXYZ(i, x, y, z);
+    }
+    crownGeo.computeVertexNormals();
+    const crownMesh = new THREE.Mesh(crownGeo, enamelMat);
+    crownMesh.position.y = 0.45;
+    toothGroup.add(crownMesh);
+
+    // 2. Cervical Transition Collar
+    const collarGeo = new THREE.CylinderGeometry(0.72, 0.62, 0.3, 48, 8);
+    const collarMesh = new THREE.Mesh(collarGeo, rootMat);
+    collarMesh.position.y = 0.15;
+    toothGroup.add(collarMesh);
+
+    // 3. Mesial & Distal Curved Roots
+    function createRoot(xOffset, zOffset, curveX, curveZ, length, taper) {
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(xOffset * 0.7, 0.05, zOffset * 0.7),
+        new THREE.Vector3(xOffset, -0.35, zOffset + curveZ * 0.05),
+        new THREE.Vector3(xOffset * 1.15 + curveX * 0.1, -0.8, zOffset + curveZ * 0.15),
+        new THREE.Vector3(xOffset + curveX * 0.2, 0.05 - length, zOffset + curveZ * 0.25)
+      ]);
+      const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.23, 20, false);
+      const tPos = tubeGeo.attributes.position;
+      for (let i = 0; i < tPos.count; i++) {
+        let ty = tPos.getY(i);
+        let progress = Math.min(1, Math.max(0, (0.05 - ty) / length));
+        let scale = 1.0 - progress * taper;
+        let pt = curve.getPoint(progress);
+        let dx = tPos.getX(i) - pt.x;
+        let dz = tPos.getZ(i) - pt.z;
+        tPos.setX(i, pt.x + dx * scale);
+        tPos.setZ(i, pt.z + dz * scale);
+      }
+      tubeGeo.computeVertexNormals();
+      return new THREE.Mesh(tubeGeo, rootMat);
+    }
+
+    const leftRoot = createRoot(-0.32, 0, -0.25, 0.1, 1.25, 0.7);
+    const rightRoot = createRoot(0.32, 0, 0.25, -0.1, 1.3, 0.72);
+    toothGroup.add(leftRoot);
+    toothGroup.add(rightRoot);
+
+    // Root apex caps
+    const apexGeo = new THREE.SphereGeometry(0.07, 16, 16);
+    const leftApex = new THREE.Mesh(apexGeo, rootMat);
+    leftApex.position.set(-0.32 - 0.2, 0.05 - 1.25, 0.25);
+    const rightApex = new THREE.Mesh(apexGeo, rootMat);
+    rightApex.position.set(0.32 + 0.2, 0.05 - 1.3, -0.25);
+    toothGroup.add(leftApex);
+    toothGroup.add(rightApex);
+
+    // 4. Champagne Gold Collar Ring
+    const ringGeo = new THREE.TorusGeometry(0.73, 0.016, 16, 64);
+    ringGeo.rotateX(Math.PI / 2);
+    const ringMesh = new THREE.Mesh(ringGeo, goldRingMat);
+    ringMesh.position.y = 0.25;
+    toothGroup.add(ringMesh);
+
+    // 5. Floating Champagne Sparkles
+    const pCount = 50;
+    const pGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(pCount * 3);
+    for (let i = 0; i < pCount; i++) {
+      let r = 1.3 + Math.random() * 0.9;
+      let theta = Math.random() * Math.PI * 2;
+      let py = (Math.random() - 0.45) * 2.5;
+      pPos[i * 3] = Math.cos(theta) * r;
+      pPos[i * 3 + 1] = py;
+      pPos[i * 3 + 2] = Math.sin(theta) * r;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    const pMat = new THREE.PointsMaterial({
+      color: 0xD4AF37,
+      size: 0.045,
+      transparent: true,
+      opacity: 0.85
+    });
+    const sparkles = new THREE.Points(pGeo, pMat);
+    scene.add(sparkles);
+
+    // Studio Lights
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.25);
+    keyLight.position.set(3, 4, 5);
+    scene.add(keyLight);
+
+    const goldLight = new THREE.PointLight(0xc5a059, 1.5, 12);
+    goldLight.position.set(-3, -1, 3);
+    scene.add(goldLight);
+
+    const rimLight = new THREE.DirectionalLight(0x2dd4bf, 0.85);
+    rimLight.position.set(0, 3, -4);
+    scene.add(rimLight);
+
+    const ambientLight = new THREE.AmbientLight(0xfff7ec, 0.65);
+    scene.add(ambientLight);
+
+    // Interactive Drag Controls (Mouse & Touch)
+    let isDragging = false;
+    let prevX = 0;
+    let prevY = 0;
+    let targetRotY = 0.4;
+    let targetRotX = 0.1;
+    let autoRotate = true;
+
+    const onPointerDown = (clientX, clientY) => {
+      isDragging = true;
+      autoRotate = false;
+      prevX = clientX;
+      prevY = clientY;
+    };
+
+    const onPointerMove = (clientX, clientY) => {
+      if (!isDragging) return;
+      const dx = clientX - prevX;
+      const dy = clientY - prevY;
+      targetRotY += dx * 0.01;
+      targetRotX += dy * 0.008;
+      targetRotX = Math.max(-0.65, Math.min(0.65, targetRotX));
+      prevX = clientX;
+      prevY = clientY;
+    };
+
+    const onPointerUp = () => {
+      isDragging = false;
+    };
+
+    canvas.addEventListener('mousedown', (e) => onPointerDown(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', onPointerUp);
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (isDragging && e.touches.length === 1) onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    window.addEventListener('touchend', onPointerUp);
+
+    // Preset Angle View Buttons
+    const presetButtons = container.querySelectorAll('.tooth-preset-btn');
+    presetButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        presetButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const view = btn.dataset.view;
+        autoRotate = false;
+
+        if (view === 'all') {
+          targetRotX = 0.1;
+          targetRotY += 0.5;
+          autoRotate = true;
+        } else if (view === 'crown') {
+          targetRotX = 0.55;
+          targetRotY = 0;
+        } else if (view === 'roots') {
+          targetRotX = -0.4;
+          targetRotY = Math.PI / 2;
+        }
+      });
+    });
+
+    // Handle Window Resize
+    const onResize = () => {
+      const w = getWidth();
+      const h = getHeight();
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener('resize', onResize);
+
+    // Animation Loop
+    let clock = new THREE.Clock();
+    let animFrameId;
+
+    function renderLoop() {
+      animFrameId = requestAnimationFrame(renderLoop);
+      const elapsed = clock.getElapsedTime();
+
+      if (autoRotate) {
+        targetRotY += 0.006;
+      }
+
+      // Smooth inertia damping
+      toothGroup.rotation.y += (targetRotY - toothGroup.rotation.y) * 0.08;
+      toothGroup.rotation.x += (targetRotX - toothGroup.rotation.x) * 0.08;
+      toothGroup.position.y = Math.sin(elapsed * 1.5) * 0.05;
+
+      sparkles.rotation.y += 0.002;
+      sparkles.rotation.x = Math.sin(elapsed * 0.5) * 0.05;
+
+      renderer.render(scene, camera);
+    }
+
+    renderLoop();
+  } catch (err) {
+    console.warn('Unable to initialize 3D Tooth Studio:', err);
+  }
+}
+
+/* ==========================================================================
+   17. 3D CARD PERSPECTIVE TILT EFFECTS
+   ========================================================================== */
+function init3DCardTilt() {
+  // Check if device supports hover / not pure touch
+  if (window.matchMedia('(hover: none)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const tiltCards = document.querySelectorAll(
+    '.treatment-card, .reason-card, .review-card, .booking-split-card'
+  );
+
+  tiltCards.forEach(card => {
+    let ticking = false;
+
+    card.addEventListener('mousemove', (e) => {
+      if (ticking) return;
+      ticking = true;
+
+      requestAnimationFrame(() => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateX = ((y - centerY) / centerY) * -6; // max 6deg
+        const rotateY = ((x - centerX) / centerX) * 6;  // max 6deg
+
+        card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.015, 1.015, 1.015)`;
+        ticking = false;
+      });
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    });
+  });
 }
