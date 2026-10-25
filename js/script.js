@@ -218,6 +218,7 @@ function initMobileNav() {
     const isOpen = open !== undefined ? open : toggleBtn.getAttribute('aria-expanded') !== 'true';
     toggleBtn.setAttribute('aria-expanded', String(isOpen));
     navMenu.classList.toggle('open', isOpen);
+    navMenu.classList.toggle('active', isOpen);
     document.body.style.overflow = isOpen ? 'hidden' : '';
   };
 
