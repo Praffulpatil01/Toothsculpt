@@ -142,6 +142,27 @@ const TREATMENT_DETAILS = {
       'Transparent discussion of findings, prioritized recommendations, and questions answered.'
     ],
     faq: 'What should I bring? Please bring any recent dental records, X-rays (if available), and a list of current medications.'
+  },
+  cosmetic: {
+    title: 'Cosmetic Veneers & Smile Makeovers',
+    badge: 'Aesthetic Dentistry',
+    category: 'cosmetic',
+    formValue: 'Cosmetic Smile Makeover',
+    summary: 'Custom-crafted ultra-thin ceramic veneers and composite artistry designed to enhance shade, proportion, and balance.',
+    overview: 'Cosmetic veneers are custom porcelain shells bonded to the front surface of teeth to correct deep discoloration, minor misalignments, chips, or spacing gaps. We focus on conservative preparation, preserving natural enamel while achieving harmonious, life-like dental aesthetics.',
+    whoIsItFor: [
+      'Patients with stubborn intrinsic tooth staining resistant to chemical whitening.',
+      'Individuals with chipped, worn, or uneven anterior tooth edges.',
+      'Those seeking to close diastemas (gaps) without prolonged orthodontic treatment.',
+      'Anyone desiring a natural, symmetrical, confidence-boosting smile redesign.'
+    ],
+    consultationSteps: [
+      'Facial aesthetics and smile line analysis during an initial discussion.',
+      'Digital diagnostic imaging and mock-up visualization of prospective results.',
+      'Minimal, conservative tooth preparation and impression capture.',
+      'Precision bonding and final polish of handcrafted porcelain veneers.'
+    ],
+    faq: 'How long do porcelain veneers last? With regular flossing, checkups, and good oral hygiene, porcelain veneers typically last 10 to 15 years or longer.'
   }
 };
 
@@ -1103,38 +1124,8 @@ function init3DTooth() {
    17. 3D CARD PERSPECTIVE TILT EFFECTS
    ========================================================================== */
 function init3DCardTilt() {
-  // Check if device supports hover / not pure touch
-  if (window.matchMedia('(hover: none)').matches) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  const tiltCards = document.querySelectorAll(
-    '.treatment-card, .reason-card, .review-card, .booking-split-card'
-  );
-
-  tiltCards.forEach(card => {
-    let ticking = false;
-
-    card.addEventListener('mousemove', (e) => {
-      if (ticking) return;
-      ticking = true;
-
-      requestAnimationFrame(() => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-
-        const rotateX = ((y - centerY) / centerY) * -6; // max 6deg
-        const rotateY = ((x - centerX) / centerX) * 6;  // max 6deg
-
-        card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.015, 1.015, 1.015)`;
-        ticking = false;
-      });
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-    });
-  });
+  // Deliberate human UI decision: 3D perspective mousemove tilt on cards
+  // creates unnecessary motion sickness and feels like a template gadget.
+  // Replaced with dignified, accessible CSS transition states.
+  return;
 }
