@@ -2641,3 +2641,174 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius-sm);
   letter-spacing: 0.01em;
 }
+
+/* --------------------------------------------------------------------------
+   PROPER HEADER & GOOGLE MAPS CARD STYLING
+   -------------------------------------------------------------------------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--c-border-subtle);
+  box-shadow: 0 1px 4px rgba(13, 32, 45, 0.05);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 78px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  gap: 20px;
+}
+
+.brand-name {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--c-navy);
+  line-height: 1.15;
+}
+
+.header-phone-link {
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-navy);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--c-border-subtle);
+  background-color: var(--c-paper);
+  transition: all var(--transition-fast);
+}
+
+.header-phone-link svg {
+  color: var(--c-teal);
+}
+
+.header-phone-link:hover {
+  background-color: var(--c-mint);
+  border-color: var(--c-teal);
+  color: var(--c-teal);
+}
+
+@media (max-width: 992px) {
+  .header-phone-link span {
+    display: none;
+  }
+  .header-phone-link {
+    padding: 8px 10px;
+  }
+}
+
+/* Pure Photo Hero Frame (without 3d tabs) */
+.pure-photo-frame {
+  background-color: var(--c-white);
+  border: 1px solid var(--c-border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(13, 32, 45, 0.08);
+}
+
+.pure-photo-frame .hero-image-box img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 4 / 3;
+}
+
+/* Proper Google Maps Card Header */
+.map-frame-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--c-border-subtle);
+  gap: 16px;
+}
+
+.map-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.map-google-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: #D93025; /* Official Google Red */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.map-google-badge svg {
+  color: #D93025;
+}
+
+.map-clinic-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: var(--c-navy);
+  flex-wrap: wrap;
+}
+
+.map-clinic-title strong {
+  font-weight: 700;
+}
+
+.map-clinic-rating {
+  font-size: 0.8125rem;
+  color: var(--c-text-muted);
+}
+
+.stars-gold {
+  color: var(--c-amber);
+}
+
+.map-directions-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: #1A73E8; /* Official Google Maps Blue */
+  color: #FFFFFF !important;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(26, 115, 232, 0.25);
+}
+
+.map-directions-btn:hover {
+  background-color: #1557B0;
+  color: #FFFFFF !important;
+}
+
+@media (max-width: 600px) {
+  .map-frame-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .map-directions-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
